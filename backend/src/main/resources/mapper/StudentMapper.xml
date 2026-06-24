@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.StudentMapper">
+
+    <sql id="studentVoColumns">
+        s.student_id,
+        s.student_no,
+        s.student_name,
+        s.gender,
+        s.class_id,
+        sc.class_name
+    </sql>
+
+    <sql id="studentFilter">
+        <where>
+            <if test="studentNo != null and studentNo != ''">
+                and s.student_no like concat('%', #{studentNo}, '%')
+            </if>
+            <if test="studentName != null and studentName != ''">
+                and s.student_name like concat('%', #{studentName}, '%')
+            </if>
+            <if test="gender != null and gender != ''">
+                and s.gender = #{gender}
+            </if>
+            <if test="classId != null">
+                and s.class_id = #{classId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="list" resultType="com.thirteenash.backend.pojo.vo.StudentVO">
+        select
+        <include refid="studentVoColumns"/>
+        from student s
+        join school_class sc on s.class_id = sc.class_id
+        <include refid="studentFilter"/>
+        order by s.student_id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        select count(*)
+        from student s
+        <include refid="studentFilter"/>
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.pojo.vo.StudentVO">
+        select
+        <include refid="studentVoColumns"/>
+        from student s
+        join school_class sc on s.class_id = sc.class_id
+        where s.student_id = #{studentId}
+    </select>
+
+    <select id="countByStudentNo" resultType="int">
+        select count(*)
+        from student
+        where student_no = #{studentNo}
+        <if test="studentId != null">
+            and student_id != #{studentId}
+        </if>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="studentId">
+        insert into student (student_no, student_name, gender, class_id)
+        values (#{studentNo}, #{studentName}, #{gender}, #{classId})
+    </insert>
+
+    <update id="update">
+        update student
+        set student_no = #{studentNo},
+            student_name = #{studentName},
+            gender = #{gender},
+            class_id = #{classId}
+        where student_id = #{studentId}
+    </update>
+
+    <delete id="deleteById">
+        delete from student
+        where student_id = #{studentId}
+    </delete>
+
+</mapper>
