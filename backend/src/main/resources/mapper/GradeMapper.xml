@@ -2,8 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 年级Mapper：对应 grade 表的 SQL 操作 -->
 <mapper namespace="com.thirteenash.backend.mapper.GradeMapper">
 
+    <!-- 分页查询年级列表，支持按名称模糊查询 -->
     <select id="list" resultType="com.thirteenash.backend.entity.Grade">
         select grade_id, grade_name
         from grade
@@ -16,6 +18,7 @@
         limit #{pageSize} offset #{offset}
     </select>
 
+    <!-- 查询年级总数 -->
     <select id="count" resultType="long">
         select count(*)
         from grade
@@ -26,12 +29,14 @@
         </where>
     </select>
 
+    <!-- 根据ID查询单个年级 -->
     <select id="getById" resultType="com.thirteenash.backend.entity.Grade">
         select grade_id, grade_name
         from grade
         where grade_id = #{gradeId}
     </select>
 
+    <!-- 按名称查询数量，排除自身ID（用于修改时的唯一性校验） -->
     <select id="countByName" resultType="int">
         select count(*)
         from grade
@@ -41,23 +46,27 @@
         </if>
     </select>
 
+    <!-- 查询年级下关联的班级数量 -->
     <select id="countClassByGradeId" resultType="int">
         select count(*)
         from school_class
         where grade_id = #{gradeId}
     </select>
 
+    <!-- 新增年级，返回自增主键 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="gradeId">
         insert into grade (grade_name)
         values (#{gradeName})
     </insert>
 
+    <!-- 修改年级名称 -->
     <update id="update">
         update grade
         set grade_name = #{gradeName}
         where grade_id = #{gradeId}
     </update>
 
+    <!-- 根据ID删除年级 -->
     <delete id="deleteById">
         delete from grade
         where grade_id = #{gradeId}

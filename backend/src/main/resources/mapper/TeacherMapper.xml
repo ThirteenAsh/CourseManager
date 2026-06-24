@@ -2,8 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 教师Mapper：对应 teacher 表的 SQL 操作 -->
 <mapper namespace="com.thirteenash.backend.mapper.TeacherMapper">
 
+    <!-- 分页查询教师列表，支持按工号/姓名模糊查询和性别筛选 -->
     <select id="list" resultType="com.thirteenash.backend.entity.Teacher">
         select teacher_id, teacher_no, teacher_name, gender
         from teacher
@@ -22,6 +24,7 @@
         limit #{pageSize} offset #{offset}
     </select>
 
+    <!-- 查询教师总数 -->
     <select id="count" resultType="long">
         select count(*)
         from teacher
@@ -38,12 +41,14 @@
         </where>
     </select>
 
+    <!-- 根据ID查询单个教师 -->
     <select id="getById" resultType="com.thirteenash.backend.entity.Teacher">
         select teacher_id, teacher_no, teacher_name, gender
         from teacher
         where teacher_id = #{teacherId}
     </select>
 
+    <!-- 按工号查询数量（排除自身ID，用于唯一性校验） -->
     <select id="countByTeacherNo" resultType="int">
         select count(*)
         from teacher
@@ -53,17 +58,20 @@
         </if>
     </select>
 
+    <!-- 查询教师任课关系数量 -->
     <select id="countClassCourseByTeacherId" resultType="int">
         select count(*)
         from class_course_teacher
         where teacher_id = #{teacherId}
     </select>
 
+    <!-- 新增教师，返回自增主键 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="teacherId">
         insert into teacher (teacher_no, teacher_name, gender)
         values (#{teacherNo}, #{teacherName}, #{gender})
     </insert>
 
+    <!-- 修改教师信息 -->
     <update id="update">
         update teacher
         set teacher_no = #{teacherNo},
@@ -72,6 +80,7 @@
         where teacher_id = #{teacherId}
     </update>
 
+    <!-- 根据ID删除教师 -->
     <delete id="deleteById">
         delete from teacher
         where teacher_id = #{teacherId}

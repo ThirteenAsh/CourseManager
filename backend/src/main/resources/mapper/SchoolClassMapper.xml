@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 班级Mapper：对应 school_class 表的 SQL 操作，关联查询年级和班主任信息 -->
+<mapper namespace="com.thirteenash.backend.mapper.SchoolClassMapper">
+
+    <!-- 公共列定义：班级基本信息 + 年级名称 + 班主任姓名 -->
+    <sql id="classVoColumns">
+        sc.class_id,
+        sc.class_name,
+        sc.grade_id,
+        g.grade_name,
+        sc.head_teacher_id,
+        t.teacher_name as head_teacher_name
+    </sql>
+
+    <!-- 公共过滤条件：支持按班级名称、年级、班主任筛选 -->
+    <sql id="classFilter">
+        <where>
+            <if test="className != null and className != ''">
+                and sc.class_name like concat('%', #{className}, '%')
+            </if>
+            <if test="gradeId != null">
+                and sc.grade_id = #{gradeId}
+            </if>
+            <if test="headTeacherId != null">
+                and sc.head_teacher_id = #{headTeacherId}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 分页查询班级列表，关联 grade 和 teacher 表 -->
+    <select id="list" resultType="com.thirteenash.backend.pojo.vo.SchoolClassVO">
+        select
+        <include refid="classVoColumns"/>
+        from school_class sc
+        join grade g on sc.grade_id = g.grade_id
+        left join teacher t on sc.head_teacher_id = t.teacher_id
+        <include refid="classFilter"/>
+        order by sc.class_id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <!-- 查询班级总数 -->
+    <select id="count" resultType="long">
+        select count(*)
+        from school_class sc
+        <include refid="classFilter"/>
+    </select>
+
+    <!-- 根据ID查询班级详情 -->
+    <select id="getById" resultType="com.thirteenash.backend.pojo.vo.SchoolClassVO">
+        select
+        <include refid="classVoColumns"/>
+        from school_class sc
+        join grade g on sc.grade_id = g.grade_id
+        left join teacher t on sc.head_teacher_id = t.teacher_id
+        where sc.class_id = #{classId}
+    </select>
+
+    <!-- 按班级名称查询数量（排除自身ID，用于唯一性校验） -->
+    <select id="countByClassName" resultType="int">
+        select count(*)
+        from school_class
+        where class_name = #{className}
+        <if test="classId != null">
+            and class_id != #{classId}
+        </if>
+    </select>
+
+    <!-- 查询班级下学生数量 -->
+    <select id="countStudentByClassId" resultType="int">
+        select count(*)
+        from student
+        where class_id = #{classId}
+    </select>
+
+    <!-- 查询班级任课关系数量 -->
+    <select id="countClassCourseByClassId" resultType="int">
+        select count(*)
+        from class_course_teacher
+        where class_id = #{classId}
+    </select>
+
+    <!-- 新增班级，返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="classId">
+        insert into school_class (class_name, grade_id, head_teacher_id)
+        values (#{className}, #{gradeId}, #{headTeacherId})
+    </insert>
+
+    <!-- 修改班级信息 -->
+    <update id="update">
+        update school_class
+        set class_name = #{className},
+            grade_id = #{gradeId},
+            head_teacher_id = #{headTeacherId}
+        where class_id = #{classId}
+    </update>
+
+    <!-- 根据ID删除班级 -->
+    <delete id="deleteById">
+        delete from school_class
+        where class_id = #{classId}
+    </delete>
+
+</mapper>
