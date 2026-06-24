@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { inject, ref, onMounted } from 'vue'
 import { getGradeList, addGrade, updateGrade, deleteGrade } from '../api/grade'
 
 // 列表
@@ -13,6 +13,12 @@ const searchName = ref('')
 const showDialog = ref(false)
 const formGradeName = ref('')
 const editingId = ref(null) // null=新增
+const notify = inject('notify', () => {})
+const confirmAction = inject('confirmAction', async () => false)
+
+function showToast(message, type = 'success') {
+  notify(message, type)
+}
 
 function loadData() {
   return getGradeList({
@@ -24,7 +30,7 @@ function loadData() {
     total.value = data.total || 0
     calcPages()
   }).catch((err) => {
-    alert('加载失败：' + err.message)
+    showToast('加载失败：' + err.message, 'error')
   })
 }
 
@@ -65,9 +71,10 @@ function closeDialog() {
 function handleSave() {
   const name = formGradeName.value.trim()
   if (!name) {
-    alert('请输入年级名称')
+    showToast('请输入年级名称', 'error')
     return
   }
+  const successMessage = editingId.value ? '修改年级成功' : '新增年级成功'
   const fn = editingId.value
     ? updateGrade(editingId.value, { gradeName: name })
     : addGrade({ gradeName: name })
@@ -75,18 +82,26 @@ function handleSave() {
   fn.then(() => {
     closeDialog()
     load()
+    showToast(successMessage)
   }).catch((err) => {
-    alert(err.message)
+    showToast(err.message, 'error')
   })
 }
 
 // 删除
-function handleDelete(row) {
-  if (!confirm(`确认删除「${row.gradeName}」？`)) return
+async function handleDelete(row) {
+  const confirmed = await confirmAction({
+    title: '删除年级',
+    message: `确认删除「${row.gradeName}」？删除后不可恢复。`,
+    confirmText: '删除',
+    type: 'danger',
+  })
+  if (!confirmed) return
   deleteGrade(row.gradeId).then(() => {
     load()
+    showToast('删除年级成功')
   }).catch((err) => {
-    alert(err.message)
+    showToast(err.message, 'error')
   })
 }
 

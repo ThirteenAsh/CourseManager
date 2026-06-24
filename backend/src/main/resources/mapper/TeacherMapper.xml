@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.TeacherMapper">
+
+    <select id="list" resultType="com.thirteenash.backend.entity.Teacher">
+        select teacher_id, teacher_no, teacher_name, gender
+        from teacher
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    teacher_no like concat('%', #{keyword}, '%')
+                    or teacher_name like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="gender != null and gender != ''">
+                and gender = #{gender}
+            </if>
+        </where>
+        order by teacher_id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        select count(*)
+        from teacher
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    teacher_no like concat('%', #{keyword}, '%')
+                    or teacher_name like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="gender != null and gender != ''">
+                and gender = #{gender}
+            </if>
+        </where>
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.entity.Teacher">
+        select teacher_id, teacher_no, teacher_name, gender
+        from teacher
+        where teacher_id = #{teacherId}
+    </select>
+
+    <select id="countByTeacherNo" resultType="int">
+        select count(*)
+        from teacher
+        where teacher_no = #{teacherNo}
+        <if test="teacherId != null">
+            and teacher_id != #{teacherId}
+        </if>
+    </select>
+
+    <select id="countClassCourseByTeacherId" resultType="int">
+        select count(*)
+        from class_course_teacher
+        where teacher_id = #{teacherId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="teacherId">
+        insert into teacher (teacher_no, teacher_name, gender)
+        values (#{teacherNo}, #{teacherName}, #{gender})
+    </insert>
+
+    <update id="update">
+        update teacher
+        set teacher_no = #{teacherNo},
+            teacher_name = #{teacherName},
+            gender = #{gender}
+        where teacher_id = #{teacherId}
+    </update>
+
+    <delete id="deleteById">
+        delete from teacher
+        where teacher_id = #{teacherId}
+    </delete>
+
+</mapper>
