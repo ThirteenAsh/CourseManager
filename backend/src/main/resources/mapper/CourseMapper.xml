@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.CourseMapper">
+
+    <select id="list" resultType="com.thirteenash.backend.entity.Course">
+        select course_id, course_code, course_name
+        from course
+        <where>
+            <if test="courseCode != null and courseCode != ''">
+                and course_code like concat('%', #{courseCode}, '%')
+            </if>
+            <if test="courseName != null and courseName != ''">
+                and course_name like concat('%', #{courseName}, '%')
+            </if>
+        </where>
+        order by course_id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        select count(*)
+        from course
+        <where>
+            <if test="courseCode != null and courseCode != ''">
+                and course_code like concat('%', #{courseCode}, '%')
+            </if>
+            <if test="courseName != null and courseName != ''">
+                and course_name like concat('%', #{courseName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.entity.Course">
+        select course_id, course_code, course_name
+        from course
+        where course_id = #{courseId}
+    </select>
+
+    <select id="countByCourseCode" resultType="int">
+        select count(*)
+        from course
+        where course_code = #{courseCode}
+        <if test="courseId != null">
+            and course_id != #{courseId}
+        </if>
+    </select>
+
+    <select id="countByCourseName" resultType="int">
+        select count(*)
+        from course
+        where course_name = #{courseName}
+        <if test="courseId != null">
+            and course_id != #{courseId}
+        </if>
+    </select>
+
+    <select id="countClassCourseByCourseId" resultType="int">
+        select count(*)
+        from class_course_teacher
+        where course_id = #{courseId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="courseId">
+        insert into course (course_code, course_name)
+        values (#{courseCode}, #{courseName})
+    </insert>
+
+    <update id="update">
+        update course
+        set course_code = #{courseCode},
+            course_name = #{courseName}
+        where course_id = #{courseId}
+    </update>
+
+    <delete id="deleteById">
+        delete from course
+        where course_id = #{courseId}
+    </delete>
+
+</mapper>
