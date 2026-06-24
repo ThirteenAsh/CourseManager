@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.GradeMapper">
+
+    <select id="list" resultType="com.thirteenash.backend.entity.Grade">
+        select grade_id, grade_name
+        from grade
+        <where>
+            <if test="gradeName != null and gradeName != ''">
+                grade_name like concat('%', #{gradeName}, '%')
+            </if>
+        </where>
+        order by grade_id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        select count(*)
+        from grade
+        <where>
+            <if test="gradeName != null and gradeName != ''">
+                grade_name like concat('%', #{gradeName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.entity.Grade">
+        select grade_id, grade_name
+        from grade
+        where grade_id = #{gradeId}
+    </select>
+
+    <select id="countByName" resultType="int">
+        select count(*)
+        from grade
+        where grade_name = #{gradeName}
+        <if test="gradeId != null">
+            and grade_id != #{gradeId}
+        </if>
+    </select>
+
+    <select id="countClassByGradeId" resultType="int">
+        select count(*)
+        from school_class
+        where grade_id = #{gradeId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="gradeId">
+        insert into grade (grade_name)
+        values (#{gradeName})
+    </insert>
+
+    <update id="update">
+        update grade
+        set grade_name = #{gradeName}
+        where grade_id = #{gradeId}
+    </update>
+
+    <delete id="deleteById">
+        delete from grade
+        where grade_id = #{gradeId}
+    </delete>
+
+</mapper>

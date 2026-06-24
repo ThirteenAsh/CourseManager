@@ -1,4 +1,4 @@
-package com.thirteenash.backend.pojo.dto.result;
+package com.thirteenash.backend.pojo.result;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
