@@ -178,6 +178,70 @@ textarea {
   border-left-color: var(--primary);
 }
 
+.nav-section {
+  margin: 0;
+}
+
+.nav-section-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  min-height: auto;
+}
+
+.nav-section-toggle:hover {
+  background: #f0f4f8;
+}
+
+.nav-section-toggle.active {
+  background: #f7fbff;
+  color: var(--primary);
+  font-weight: bold;
+  border-left-color: var(--primary);
+}
+
+.nav-section-toggle .nav-caret {
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.18s ease;
+}
+
+.nav-section-toggle.open .nav-caret {
+  transform: rotate(45deg);
+}
+
+.nav-subgroup {
+  padding: 2px 0 4px;
+  background: #fbfdff;
+}
+
+.nav-subitem {
+  padding-left: 30px;
+  font-size: 13px;
+}
+
+.nav-collapse-enter-active,
+.nav-collapse-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.nav-collapse-enter-from,
+.nav-collapse-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .sidebar-footer {
   padding: 12px 16px;
   border-top: 1px solid var(--border);

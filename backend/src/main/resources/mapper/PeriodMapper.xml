@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.PeriodMapper">
+
+    <select id="listAll" resultType="com.thirteenash.backend.entity.Period">
+        select period_id, period_no, start_time, end_time, remark
+        from period
+        order by period_no
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.entity.Period">
+        select period_id, period_no, start_time, end_time, remark
+        from period
+        where period_id = #{periodId}
+    </select>
+
+    <select id="countByPeriodNo" resultType="int">
+        select count(*)
+        from period
+        where period_no = #{periodNo}
+        <if test="periodId != null">
+            and period_id != #{periodId}
+        </if>
+    </select>
+
+    <select id="countTimetableByPeriodId" resultType="int">
+        select count(*)
+        from timetable
+        where period_id = #{periodId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="periodId">
+        insert into period (period_no, start_time, end_time, remark)
+        values (#{periodNo}, #{startTime}, #{endTime}, #{remark})
+    </insert>
+
+    <update id="update">
+        update period
+        set period_no = #{periodNo},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            remark = #{remark}
+        where period_id = #{periodId}
+    </update>
+
+    <delete id="deleteById">
+        delete from period
+        where period_id = #{periodId}
+    </delete>
+
+</mapper>
