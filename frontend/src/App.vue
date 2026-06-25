@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
-import DashboardView from './views/DashboardView.vue'
+import WelcomeView from './views/WelcomeView.vue'
 import GradeView from './views/GradeView.vue'
 import ClassesView from './views/ClassesView.vue'
 import CoursesView from './views/CoursesView.vue'
@@ -13,7 +13,7 @@ import TimetablesView from './views/TimetablesView.vue'
 import ProcedureToolsView from './views/ProcedureToolsView.vue'
 
 const pages = [
-  { key: 'dashboard', label: '系统概览', component: DashboardView },
+  { key: 'welcome', label: '欢迎页', component: WelcomeView },
   { key: 'grades', label: '年级管理', component: GradeView },
   { key: 'classes', label: '班级管理', component: ClassesView },
   { key: 'courses', label: '课程管理', component: CoursesView },
@@ -23,10 +23,10 @@ const pages = [
   { key: 'periods', label: '节次管理', component: PeriodsView },
   { key: 'class-courses', label: '任课安排', component: ClassCoursesView },
   { key: 'timetables', label: '排课管理', component: TimetablesView },
-  { key: 'procedures', label: '课表与检测', component: ProcedureToolsView },
+  { key: 'procedures', label: '课表生成', component: ProcedureToolsView },
 ]
 
-const defaultPageKey = 'dashboard'
+const defaultPageKey = 'welcome'
 const basicPageKeys = ['grades', 'classes', 'courses', 'teachers', 'students']
 const notifications = ref([])
 const confirmDialog = ref({
@@ -48,15 +48,26 @@ function isValidPageKey(key) {
   return pages.some((page) => page.key === key)
 }
 
+function getRawPageKeyFromHash() {
+  return window.location.hash.replace(/^#\/?/, '')
+}
+
 function getPageKeyFromHash() {
-  const key = window.location.hash.replace(/^#\/?/, '')
+  const key = getRawPageKeyFromHash()
   return isValidPageKey(key) ? key : defaultPageKey
 }
 
 function syncPageFromUrl() {
   activeKey.value = getPageKeyFromHash()
+  ensureValidHash()
   if (isBasicPageKey(activeKey.value)) {
     basicOpen.value = true
+  }
+}
+
+function ensureValidHash() {
+  if (!window.location.hash || !isValidPageKey(getRawPageKeyFromHash())) {
+    window.history.replaceState(null, '', `#/${activeKey.value}`)
   }
 }
 
@@ -112,7 +123,7 @@ provide('confirmAction', confirmAction)
 const activeKey = ref(getPageKeyFromHash())
 const basicOpen = ref(true)
 const activePage = computed(() => pages.find((p) => p.key === activeKey.value) ?? pages[0])
-const dashboardPage = computed(() => pages.find((page) => page.key === defaultPageKey))
+const welcomePage = computed(() => pages.find((page) => page.key === defaultPageKey))
 const basicPages = computed(() => (
   basicPageKeys.map((key) => pages.find((page) => page.key === key)).filter(Boolean)
 ))
@@ -122,9 +133,7 @@ const otherPages = computed(() => pages.filter((page) => (
 const basicGroupActive = computed(() => isBasicPageKey(activeKey.value))
 
 onMounted(() => {
-  if (!window.location.hash) {
-    window.history.replaceState(null, '', `#/${activeKey.value}`)
-  }
+  ensureValidHash()
   window.addEventListener('hashchange', syncPageFromUrl)
 })
 
@@ -137,19 +146,19 @@ onBeforeUnmount(() => {
 <template>
   <div class="app-shell">
     <aside class="sidebar">
-      <button class="brand" type="button" @click="navigateTo('dashboard')">
+      <button class="brand" type="button" @click="navigateTo(defaultPageKey)">
         排课管理系统
         <small>陕西省洛南中学</small>
       </button>
 
       <nav class="nav-group">
         <button
-          v-if="dashboardPage"
+          v-if="welcomePage"
           type="button"
-          :class="['nav-item', { active: dashboardPage.key === activeKey }]"
-          @click="navigateTo(dashboardPage.key)"
+          :class="['nav-item', { active: welcomePage.key === activeKey }]"
+          @click="navigateTo(welcomePage.key)"
         >
-          {{ dashboardPage.label }}
+          {{ welcomePage.label }}
         </button>
 
         <div class="nav-section">
@@ -188,7 +197,7 @@ onBeforeUnmount(() => {
         </button>
       </nav>
 
-      <div class="sidebar-footer">静态原型 v1.0</div>
+      <div class="sidebar-footer">最牛逼的课表管理系统 v1.0</div>
     </aside>
 
     <main class="main">
