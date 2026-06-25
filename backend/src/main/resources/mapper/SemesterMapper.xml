@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.SemesterMapper">
+
+    <sql id="semesterVoColumns">
+        semester_id,
+        school_year,
+        term,
+        case term when 1 then '上学期' when 2 then '下学期' end as term_name,
+        start_date,
+        end_date,
+        is_current
+    </sql>
+
+    <sql id="semesterFilter">
+        <where>
+            <if test="schoolYear != null and schoolYear != ''">
+                and school_year like concat('%', #{schoolYear}, '%')
+            </if>
+            <if test="term != null">
+                and term = #{term}
+            </if>
+            <if test="isCurrent != null">
+                and is_current = #{isCurrent}
+            </if>
+        </where>
+    </sql>
+
+    <select id="list" resultType="com.thirteenash.backend.pojo.vo.SemesterVO">
+        select
+        <include refid="semesterVoColumns"/>
+        from semester
+        <include refid="semesterFilter"/>
+        order by school_year desc, term desc, semester_id desc
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        select count(*)
+        from semester
+        <include refid="semesterFilter"/>
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.pojo.vo.SemesterVO">
+        select
+        <include refid="semesterVoColumns"/>
+        from semester
+        where semester_id = #{semesterId}
+    </select>
+
+    <select id="getCurrent" resultType="com.thirteenash.backend.pojo.vo.SemesterVO">
+        select
+        <include refid="semesterVoColumns"/>
+        from semester
+        where is_current = 1
+        order by semester_id desc
+        limit 1
+    </select>
+
+    <select id="countBySchoolYearAndTerm" resultType="int">
+        select count(*)
+        from semester
+        where school_year = #{schoolYear}
+          and term = #{term}
+        <if test="semesterId != null">
+            and semester_id != #{semesterId}
+        </if>
+    </select>
+
+    <select id="countClassCourseBySemesterId" resultType="int">
+        select count(*)
+        from class_course_teacher
+        where semester_id = #{semesterId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="semesterId">
+        insert into semester (school_year, term, start_date, end_date, is_current)
+        values (#{schoolYear}, #{term}, #{startDate}, #{endDate}, #{isCurrent})
+    </insert>
+
+    <update id="update">
+        update semester
+        set school_year = #{schoolYear},
+            term = #{term},
+            start_date = #{startDate},
+            end_date = #{endDate},
+            is_current = #{isCurrent}
+        where semester_id = #{semesterId}
+    </update>
+
+    <update id="clearCurrent">
+        update semester
+        set is_current = 0
+        where is_current = 1
+        <if test="semesterId != null">
+            and semester_id != #{semesterId}
+        </if>
+    </update>
+
+    <delete id="deleteById">
+        delete from semester
+        where semester_id = #{semesterId}
+    </delete>
+
+</mapper>

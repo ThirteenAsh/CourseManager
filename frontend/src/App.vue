@@ -4,6 +4,7 @@ import DashboardView from './views/DashboardView.vue'
 import GradeView from './views/GradeView.vue'
 import ClassesView from './views/ClassesView.vue'
 import CoursesView from './views/CoursesView.vue'
+import SemestersView from './views/SemestersView.vue'
 import StudentsView from './views/StudentsView.vue'
 import TeachersView from './views/TeachersView.vue'
 import ClassCoursesView from './views/ClassCoursesView.vue'
@@ -15,6 +16,7 @@ const pages = [
   { key: 'teachers', label: '教师管理', component: TeachersView },
   { key: 'classes', label: '班级管理', component: ClassesView },
   { key: 'courses', label: '课程管理', component: CoursesView },
+  { key: 'semesters', label: '学期管理', component: SemestersView },
   { key: 'students', label: '学生管理', component: StudentsView },
   { key: 'class-courses', label: '任课安排', component: ClassCoursesView },
   { key: 'procedures', label: '课表与检测', component: ProcedureToolsView },
