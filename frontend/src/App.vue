@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
     <aside class="sidebar">
       <button class="brand" type="button" @click="navigateTo(defaultPageKey)">
         排课管理系统
-        <small>陕西省洛南中学</small>
+        <small>西安石油大学</small>
       </button>
 
       <nav class="nav-group">
