@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.TimetableMapper">
+
+    <sql id="timetableVoColumns">
+        tt.timetable_id,
+        tt.cct_id,
+        cct.semester_id,
+        s.school_year,
+        s.term,
+        case s.term when 1 then '上学期' when 2 then '下学期' end as term_name,
+        cct.class_id,
+        sc.class_name,
+        cct.course_id,
+        co.course_name,
+        cct.teacher_id,
+        te.teacher_name,
+        tt.weekday,
+        case tt.weekday
+            when 1 then '星期一'
+            when 2 then '星期二'
+            when 3 then '星期三'
+            when 4 then '星期四'
+            when 5 then '星期五'
+            when 6 then '星期六'
+            when 7 then '星期日'
+        end as weekday_name,
+        tt.period_id,
+        p.period_no,
+        p.start_time,
+        p.end_time,
+        tt.classroom,
+        tt.remark
+    </sql>
+
+    <sql id="timetableJoins">
+        from timetable tt
+        join class_course_teacher cct on tt.cct_id = cct.cct_id
+        join semester s on cct.semester_id = s.semester_id
+        join school_class sc on cct.class_id = sc.class_id
+        join course co on cct.course_id = co.course_id
+        join teacher te on cct.teacher_id = te.teacher_id
+        join period p on tt.period_id = p.period_id
+    </sql>
+
+    <sql id="timetableFilter">
+        <where>
+            <if test="semesterId != null">
+                and cct.semester_id = #{semesterId}
+            </if>
+            <if test="classId != null">
+                and cct.class_id = #{classId}
+            </if>
+            <if test="teacherId != null">
+                and cct.teacher_id = #{teacherId}
+            </if>
+            <if test="courseId != null">
+                and cct.course_id = #{courseId}
+            </if>
+            <if test="weekday != null">
+                and tt.weekday = #{weekday}
+            </if>
+            <if test="periodId != null">
+                and tt.period_id = #{periodId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="list" resultType="com.thirteenash.backend.pojo.vo.TimetableVO">
+        select
+        <include refid="timetableVoColumns"/>
+        <include refid="timetableJoins"/>
+        <include refid="timetableFilter"/>
+        order by s.school_year desc, s.term desc, tt.weekday, p.period_no, sc.class_id, tt.timetable_id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        select count(*)
+        <include refid="timetableJoins"/>
+        <include refid="timetableFilter"/>
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.pojo.vo.TimetableVO">
+        select
+        <include refid="timetableVoColumns"/>
+        <include refid="timetableJoins"/>
+        where tt.timetable_id = #{timetableId}
+    </select>
+
+    <!--
+        存储过程：sp_add_timetable
+        作用：新增排课记录，并在数据库层完成冲突检测。
+        参数：
+            cctId     -> p_cct_id，班级课程任课编号，对应 class_course_teacher.cct_id
+            weekday   -> p_weekday，星期几，1 表示星期一，7 表示星期日
+            periodId  -> p_period_id，节次编号，对应 period.period_id
+            classroom -> p_classroom，上课教室
+            remark    -> p_remark，排课备注
+        返回：
+            timetable_id -> 新增排课记录编号，映射为 timetableId
+            message      -> 执行结果消息，通常为“排课成功”
+        说明：
+            存储过程会校验任课关系、星期、节次，并检查班级、教师、教室的时间冲突。
+    -->
+    <select id="addByProcedure"
+            statementType="CALLABLE"
+            resultType="com.thirteenash.backend.pojo.vo.TimetableAddResultVO">
+        {call sp_add_timetable(
+            #{cctId, mode=IN, jdbcType=INTEGER},
+            #{weekday, mode=IN, jdbcType=TINYINT},
+            #{periodId, mode=IN, jdbcType=INTEGER},
+            #{classroom, mode=IN, jdbcType=VARCHAR},
+            #{remark, mode=IN, jdbcType=VARCHAR}
+        )}
+    </select>
+
+    <update id="update">
+        update timetable
+        set cct_id = #{cctId},
+            weekday = #{weekday},
+            period_id = #{periodId},
+            classroom = #{classroom},
+            remark = #{remark}
+        where timetable_id = #{timetableId}
+    </update>
+
+    <delete id="deleteById">
+        delete from timetable
+        where timetable_id = #{timetableId}
+    </delete>
+
+    <!--
+        存储过程：sp_check_teacher_has_class
+        作用：检测指定教师在某学期、星期、节次是否已有课程。
+        参数：
+            semesterId -> p_semester_id，学期编号，对应 semester.semester_id
+            teacherId  -> p_teacher_id，教师编号，对应 teacher.teacher_id
+            weekday    -> p_weekday，星期几，1 表示星期一，7 表示星期日
+            periodId   -> p_period_id，节次编号，对应 period.period_id
+        返回：
+            has_class    -> 是否有课，1 表示有课，0 表示无课，映射为 hasClass
+            teacher_id   -> 教师编号，映射为 teacherId
+            teacher_name -> 教师姓名，映射为 teacherName
+            class_name   -> 班级名称，映射为 className
+            course_name  -> 课程名称，映射为 courseName
+            weekday      -> 星期
+            weekday_name -> 星期名称，映射为 weekdayName
+            period_no    -> 第几节课，映射为 periodNo
+            start_time   -> 上课时间，映射为 startTime
+            end_time     -> 下课时间，映射为 endTime
+            classroom    -> 上课教室
+    -->
+    <select id="checkTeacherByProcedure"
+            statementType="CALLABLE"
+            resultType="com.thirteenash.backend.pojo.vo.TeacherClassCheckVO">
+        {call sp_check_teacher_has_class(
+            #{semesterId, mode=IN, jdbcType=INTEGER},
+            #{teacherId, mode=IN, jdbcType=INTEGER},
+            #{weekday, mode=IN, jdbcType=TINYINT},
+            #{periodId, mode=IN, jdbcType=INTEGER}
+        )}
+    </select>
+
+    <!--
+        存储过程：sp_get_class_timetable
+        作用：生成指定班级在指定学期的完整课程表。
+        参数：
+            semesterId -> p_semester_id，学期编号，对应 semester.semester_id
+            classId    -> p_class_id，班级编号，对应 school_class.class_id
+        返回：
+            weekday      -> 星期
+            weekday_name -> 星期名称，映射为 weekdayName
+            period_no    -> 第几节课，映射为 periodNo
+            start_time   -> 上课时间，映射为 startTime
+            end_time     -> 下课时间，映射为 endTime
+            course_name  -> 课程名称，映射为 courseName
+            teacher_name -> 教师姓名，映射为 teacherName
+            classroom    -> 上课教室
+            remark       -> 备注
+        说明：
+            存储过程会按星期和节次展开完整课表，没有排课的位置返回空字符串字段。
+    -->
+    <select id="listClassTableRecordsByProcedure"
+            statementType="CALLABLE"
+            resultType="com.thirteenash.backend.pojo.vo.ClassTimetableRecordVO">
+        {call sp_get_class_timetable(
+            #{semesterId, mode=IN, jdbcType=INTEGER},
+            #{classId, mode=IN, jdbcType=INTEGER}
+        )}
+    </select>
+
+    <!--
+        存储过程：sp_get_teacher_timetable
+        作用：生成指定教师在指定学期的完整课程表。
+        参数：
+            semesterId -> p_semester_id，学期编号，对应 semester.semester_id
+            teacherId  -> p_teacher_id，教师编号，对应 teacher.teacher_id
+        返回：
+            weekday      -> 星期
+            weekday_name -> 星期名称，映射为 weekdayName
+            period_no    -> 第几节课，映射为 periodNo
+            start_time   -> 上课时间，映射为 startTime
+            end_time     -> 下课时间，映射为 endTime
+            class_name   -> 班级名称，映射为 className
+            course_name  -> 课程名称，映射为 courseName
+            classroom    -> 上课教室
+            remark       -> 备注
+        说明：
+            存储过程会按星期和节次展开完整课表，没有排课的位置返回空字符串字段。
+    -->
+    <select id="listTeacherTableRecordsByProcedure"
+            statementType="CALLABLE"
+            resultType="com.thirteenash.backend.pojo.vo.TeacherTimetableRecordVO">
+        {call sp_get_teacher_timetable(
+            #{semesterId, mode=IN, jdbcType=INTEGER},
+            #{teacherId, mode=IN, jdbcType=INTEGER}
+        )}
+    </select>
+
+    <select id="countClassConflict" resultType="int">
+        select count(*)
+        from timetable tt
+        join class_course_teacher cct on tt.cct_id = cct.cct_id
+        where cct.semester_id = #{semesterId}
+          and cct.class_id = #{classId}
+          and tt.weekday = #{weekday}
+          and tt.period_id = #{periodId}
+        <if test="timetableId != null">
+            and tt.timetable_id != #{timetableId}
+        </if>
+    </select>
+
+    <select id="countTeacherConflict" resultType="int">
+        select count(*)
+        from timetable tt
+        join class_course_teacher cct on tt.cct_id = cct.cct_id
+        where cct.semester_id = #{semesterId}
+          and cct.teacher_id = #{teacherId}
+          and tt.weekday = #{weekday}
+          and tt.period_id = #{periodId}
+        <if test="timetableId != null">
+            and tt.timetable_id != #{timetableId}
+        </if>
+    </select>
+
+    <select id="countClassroomConflict" resultType="int">
+        select count(*)
+        from timetable tt
+        join class_course_teacher cct on tt.cct_id = cct.cct_id
+        where cct.semester_id = #{semesterId}
+          and tt.classroom = #{classroom}
+          and tt.weekday = #{weekday}
+          and tt.period_id = #{periodId}
+        <if test="timetableId != null">
+            and tt.timetable_id != #{timetableId}
+        </if>
+    </select>
+
+</mapper>

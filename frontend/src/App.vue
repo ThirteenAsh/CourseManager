@@ -9,6 +9,7 @@ import PeriodsView from './views/PeriodsView.vue'
 import StudentsView from './views/StudentsView.vue'
 import TeachersView from './views/TeachersView.vue'
 import ClassCoursesView from './views/ClassCoursesView.vue'
+import TimetablesView from './views/TimetablesView.vue'
 import ProcedureToolsView from './views/ProcedureToolsView.vue'
 
 const pages = [
@@ -21,6 +22,7 @@ const pages = [
   { key: 'semesters', label: '学期管理', component: SemestersView },
   { key: 'periods', label: '节次管理', component: PeriodsView },
   { key: 'class-courses', label: '任课安排', component: ClassCoursesView },
+  { key: 'timetables', label: '排课管理', component: TimetablesView },
   { key: 'procedures', label: '课表与检测', component: ProcedureToolsView },
 ]
 
