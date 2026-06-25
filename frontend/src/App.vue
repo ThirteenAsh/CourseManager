@@ -23,7 +23,7 @@ const pages = [
   { key: 'periods', label: '节次管理', component: PeriodsView },
   { key: 'class-courses', label: '任课安排', component: ClassCoursesView },
   { key: 'timetables', label: '排课管理', component: TimetablesView },
-  { key: 'procedures', label: '课表与检测', component: ProcedureToolsView },
+  { key: 'procedures', label: '课表生成', component: ProcedureToolsView },
 ]
 
 const defaultPageKey = 'dashboard'
@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
         </button>
       </nav>
 
-      <div class="sidebar-footer">静态原型 v1.0</div>
+      <div class="sidebar-footer">最牛逼的课表管理系统 v1.0</div>
     </aside>
 
     <main class="main">

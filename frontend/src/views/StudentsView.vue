@@ -277,6 +277,11 @@ onMounted(() => {
             <button
               type="button"
               :disabled="page <= 1"
+              @click="handlePageChange(1)"
+            >首页</button>
+            <button
+              type="button"
+              :disabled="page <= 1"
               @click="handlePageChange(page - 1)"
             >上一页</button>
             <button
@@ -291,6 +296,11 @@ onMounted(() => {
               :disabled="page >= Math.ceil(total / pageSize)"
               @click="handlePageChange(page + 1)"
             >下一页</button>
+            <button
+              type="button"
+              :disabled="page >= Math.ceil(total / pageSize)"
+              @click="handlePageChange(Math.ceil(total / pageSize))"
+            >尾页</button>
           </div>
         </div>
       </div>
