@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thirteenash.backend.mapper.ClassCourseTeacherMapper">
+
+    <sql id="classCourseTeacherVoColumns">
+        cct.cct_id,
+        cct.semester_id,
+        s.school_year,
+        s.term,
+        case s.term when 1 then '上学期' when 2 then '下学期' end as term_name,
+        cct.class_id,
+        sc.class_name,
+        cct.course_id,
+        co.course_code,
+        co.course_name,
+        cct.teacher_id,
+        t.teacher_no,
+        t.teacher_name,
+        cct.weekly_hours
+    </sql>
+
+    <sql id="classCourseTeacherJoins">
+        from class_course_teacher cct
+        join semester s on cct.semester_id = s.semester_id
+        join school_class sc on cct.class_id = sc.class_id
+        join course co on cct.course_id = co.course_id
+        join teacher t on cct.teacher_id = t.teacher_id
+    </sql>
+
+    <sql id="classCourseTeacherFilter">
+        <where>
+            <if test="semesterId != null">
+                and cct.semester_id = #{semesterId}
+            </if>
+            <if test="classId != null">
+                and cct.class_id = #{classId}
+            </if>
+            <if test="courseId != null">
+                and cct.course_id = #{courseId}
+            </if>
+            <if test="teacherId != null">
+                and cct.teacher_id = #{teacherId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="list" resultType="com.thirteenash.backend.pojo.vo.ClassCourseTeacherVO">
+        select
+        <include refid="classCourseTeacherVoColumns"/>
+        <include refid="classCourseTeacherJoins"/>
+        <include refid="classCourseTeacherFilter"/>
+        order by s.school_year desc, s.term desc, sc.class_id, co.course_id, cct.cct_id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        select count(*)
+        from class_course_teacher cct
+        <include refid="classCourseTeacherFilter"/>
+    </select>
+
+    <select id="getById" resultType="com.thirteenash.backend.pojo.vo.ClassCourseTeacherVO">
+        select
+        <include refid="classCourseTeacherVoColumns"/>
+        <include refid="classCourseTeacherJoins"/>
+        where cct.cct_id = #{cctId}
+    </select>
+
+    <select id="countBySemesterClassCourse" resultType="int">
+        select count(*)
+        from class_course_teacher
+        where semester_id = #{semesterId}
+          and class_id = #{classId}
+          and course_id = #{courseId}
+        <if test="cctId != null">
+            and cct_id != #{cctId}
+        </if>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="cctId">
+        insert into class_course_teacher (semester_id, class_id, course_id, teacher_id, weekly_hours)
+        values (#{semesterId}, #{classId}, #{courseId}, #{teacherId}, #{weeklyHours})
+    </insert>
+
+    <update id="update">
+        update class_course_teacher
+        set semester_id = #{semesterId},
+            class_id = #{classId},
+            course_id = #{courseId},
+            teacher_id = #{teacherId},
+            weekly_hours = #{weeklyHours}
+        where cct_id = #{cctId}
+    </update>
+
+    <delete id="deleteById">
+        delete from class_course_teacher
+        where cct_id = #{cctId}
+    </delete>
+
+</mapper>
