@@ -4,7 +4,7 @@ import { getSemesterList } from '../api/semester'
 import { getClassList } from '../api/schoolClass'
 import { getTeacherList } from '../api/teacher'
 import { getPeriodList } from '../api/period'
-import { getClassTimetable, getTeacherTimetable } from '../api/timetable'
+import { exportTimetable, getClassTimetable, getTeacherTimetable } from '../api/timetable'
 
 const weekdays = [
   { value: 1, label: '星期一', short: '周一' },
@@ -30,6 +30,7 @@ const tableTitle = ref('课表预览')
 const tableSubtitle = ref('')
 const hasGenerated = ref(false)
 const loading = ref(false)
+const exporting = ref(false)
 
 const notify = inject('notify', () => {})
 
@@ -166,6 +167,78 @@ function handleGenerate() {
   generateTable(false)
 }
 
+function getTableParams() {
+  const params = {
+    semesterId: Number(semesterId.value),
+    type: mode.value,
+  }
+  if (mode.value === 'class') {
+    params.classId = Number(classId.value)
+  } else {
+    params.teacherId = Number(teacherId.value)
+  }
+  return params
+}
+
+function decodeFilename(value) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+function getExportFilename(response) {
+  const disposition = response.headers['content-disposition']
+    || response.headers.get?.('content-disposition')
+    || ''
+  const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+  const nameMatch = disposition.match(/filename="?([^";]+)"?/i)
+  if (utf8Match) {
+    return decodeFilename(utf8Match[1])
+  }
+  if (nameMatch) {
+    return decodeFilename(nameMatch[1])
+  }
+  return `${tableTitle.value || '课表'}.xlsx`
+}
+
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
+}
+
+function handleExport() {
+  if (!semesterId.value) {
+    showToast('请选择学期', 'error')
+    return
+  }
+  if (mode.value === 'class' && !classId.value) {
+    showToast('请选择班级', 'error')
+    return
+  }
+  if (mode.value === 'teacher' && !teacherId.value) {
+    showToast('请选择教师', 'error')
+    return
+  }
+
+  exporting.value = true
+  exportTimetable(getTableParams()).then((response) => {
+    downloadBlob(response.data, getExportFilename(response))
+    showToast('课表导出成功')
+  }).catch((err) => {
+    showToast(err.message || '课表导出失败', 'error')
+  }).finally(() => {
+    exporting.value = false
+  })
+}
+
 onMounted(() => {
   loadOptions().then(() => {
     if (semesterId.value && classId.value) {
@@ -182,9 +255,6 @@ onMounted(() => {
         <h2>课表生成</h2>
         <p>{{ tableSubtitle || '班级课表与教师课表' }}</p>
       </div>
-      <button type="button" class="primary" :disabled="loading" @click="handleGenerate">
-        {{ loading ? '生成中' : '生成课表' }}
-      </button>
     </div>
 
     <div class="panel">
@@ -239,6 +309,23 @@ onMounted(() => {
           <div class="toolbar-actions">
             <button type="button" class="primary" :disabled="loading" @click="handleGenerate">
               {{ loading ? '生成中' : '生成课表' }}
+            </button>
+            <button
+              type="button"
+              class="export-button"
+              :disabled="loading || exporting"
+              @click="handleExport"
+            >
+              <svg class="excel-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 3h9l5 5v13H5z" fill="#fff" stroke="#1f7a43" stroke-width="1.5" />
+                <path d="M14 3v5h5" fill="#e8f5ee" stroke="#1f7a43" stroke-width="1.5" />
+                <path d="M4 8h10v9H4z" fill="#1f7a43" />
+                <path
+                  d="M6.4 10.2 8 12.4l1.6-2.2h1.5l-2.2 3 2.3 3.1H9.6L8 14l-1.7 2.3H4.8l2.4-3.1-2.3-3z"
+                  fill="#fff"
+                />
+              </svg>
+              <span>{{ exporting ? '导出中' : '导出课表' }}</span>
             </button>
           </div>
         </div>
@@ -328,7 +415,31 @@ onMounted(() => {
 
 .toolbar-actions {
   display: flex;
+  gap: 8px;
   justify-content: flex-start;
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: #1f7a43;
+  color: #1f7a43;
+  background: #fff;
+}
+
+.export-button:hover {
+  background: #eef8f2;
+}
+
+.toolbar-actions button:disabled {
+  opacity: 0.55;
+}
+
+.excel-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
 }
 
 .schedule-wrap {

@@ -39,3 +39,11 @@ export function getClassTimetable(params) {
 export function getTeacherTimetable(params) {
   return request.get('/timetables/teacher-table', { params })
 }
+
+// 导出课表
+export function exportTimetable(params) {
+  return request.get('/timetable/export', {
+    params,
+    responseType: 'blob',
+  })
+}

@@ -26,4 +26,8 @@ public interface TimetableService {
     ClassTimetableVO getClassTable(Integer semesterId, Integer classId);
 
     TeacherTimetableVO getTeacherTable(Integer semesterId, Integer teacherId);
+
+    byte[] exportClassTable(Integer semesterId, Integer classId);
+
+    byte[] exportTeacherTable(Integer semesterId, Integer teacherId);
 }
